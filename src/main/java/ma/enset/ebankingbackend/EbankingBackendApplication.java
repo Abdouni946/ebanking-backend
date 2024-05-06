@@ -1,5 +1,6 @@
 package ma.enset.ebankingbackend;
 
+import ma.enset.ebankingbackend.DTOs.CustomerDTO;
 import ma.enset.ebankingbackend.entities.AccountOperation;
 import ma.enset.ebankingbackend.entities.CurrentAccount;
 import ma.enset.ebankingbackend.entities.Customer;
@@ -35,7 +36,7 @@ public class EbankingBackendApplication {
         return args -> {
 
           Stream.of("hassan","imane","mohammed").forEach(name -> {
-              Customer customer = new Customer();
+              CustomerDTO customer = new CustomerDTO();
               customer.setName(name);
               customer.setEmail(name+"@gmail.com");
               bankAccountService.saveCustomer(customer);
