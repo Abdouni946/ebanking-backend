@@ -15,5 +15,6 @@ public class Customer {
     private String Name;
     private String email;
     @OneToMany (mappedBy = "customer")
+
     private List<BankAccount> bankAccount;
 }
