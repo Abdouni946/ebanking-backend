@@ -1,6 +1,9 @@
 package ma.enset.ebankingbackend;
 
+import ma.enset.ebankingbackend.DTOs.BankAccountDTO;
+import ma.enset.ebankingbackend.DTOs.CurrentBankAccountDTO;
 import ma.enset.ebankingbackend.DTOs.CustomerDTO;
+import ma.enset.ebankingbackend.DTOs.SavingBankAccountDTO;
 import ma.enset.ebankingbackend.entities.AccountOperation;
 import ma.enset.ebankingbackend.entities.CurrentAccount;
 import ma.enset.ebankingbackend.entities.Customer;
@@ -45,19 +48,24 @@ public class EbankingBackendApplication {
                 try {
                     bankAccountService.saveSavingAccount(Math.random()*9000,3.5,customer.getId());
                     bankAccountService.saveCurrentAccount(Math.random()*9000,9000,customer.getId());
-                    List<BankAccount>  bankAccountList = bankAccountService.listBankAccount();
-                      for(BankAccount bankAccount : bankAccountList) {
-                            try{
-                                bankAccountService.credit(bankAccount.getId(), Math.random() * 9000, "Credit");
-                                bankAccountService.debit(bankAccount.getId(), Math.random() * 9000, "Debit");
-                            } catch (BankAccountNotFoundException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                } catch (Exception | CustomerNotFoundException e) {
+                    } catch (Exception | CustomerNotFoundException e) {
                     e.printStackTrace();
                 }
             });
+
+            List<BankAccountDTO>  bankAccountList = bankAccountService.listBankAccount();
+            for(BankAccountDTO bankAccount : bankAccountList) {
+                for (int i = 0; i < 10; i++) {
+                    String accountId ;
+                    if ( bankAccount instanceof SavingBankAccountDTO){
+                        accountId = ((SavingBankAccountDTO) bankAccount).getId();}
+                    else {
+                        accountId = ((CurrentBankAccountDTO) bankAccount).getId();
+                    }
+                    bankAccountService.credit(accountId, 10000+Math.random() * 900000, "Credit");
+                    bankAccountService.debit(accountId, 1000+Math.random() * 9000, "Debit");
+                }
+            }
         };
     }
 

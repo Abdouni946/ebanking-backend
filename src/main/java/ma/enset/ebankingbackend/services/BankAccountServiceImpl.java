@@ -2,9 +2,7 @@ package ma.enset.ebankingbackend.services;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ma.enset.ebankingbackend.DTOs.CurrentBankAccountDTO;
-import ma.enset.ebankingbackend.DTOs.CustomerDTO;
-import ma.enset.ebankingbackend.DTOs.SavingBankAccountDTO;
+import ma.enset.ebankingbackend.DTOs.*;
 import ma.enset.ebankingbackend.entities.*;
 import ma.enset.ebankingbackend.enums.OperationType;
 import ma.enset.ebankingbackend.exeptions.BalanceNotSufficientException;
@@ -94,15 +92,22 @@ public class BankAccountServiceImpl implements BankAccountService{
     }
 
     @Override
-    public BankAccount getBankAccount(String AccountId) throws BankAccountNotFoundException {
+    public BankAccountDTO getBankAccount(String AccountId) throws BankAccountNotFoundException {
             BankAccount bankAccount = bankAccountReposiroty.findById(AccountId)
                     .orElseThrow(() -> new BankAccountNotFoundException("Account Not Found"));
-        return bankAccount;
+            if(bankAccount instanceof SavingAccount){
+                SavingAccount savingAccount = (SavingAccount) bankAccount;
+                return mapper.fromSavingBankAccount(savingAccount);}
+            else{
+                CurrentAccount currentAccount = (CurrentAccount) bankAccount;
+                return mapper.fromCurrentBankAccount(currentAccount);
+            }
     }
 
     @Override
     public void debit(String AccountId, double amount, String description) throws BankAccountNotFoundException, BalanceNotSufficientException{
-      BankAccount bankAccount = getBankAccount(AccountId);
+        BankAccount bankAccount = bankAccountReposiroty.findById(AccountId)
+                .orElseThrow(() -> new BankAccountNotFoundException("Account Not Found"));
        if(bankAccount.getBalance() < amount)
            throw new BalanceNotSufficientException("Insufficient Balance");
         AccountOperation accountOperation = new AccountOperation();
@@ -117,7 +122,8 @@ public class BankAccountServiceImpl implements BankAccountService{
 
     @Override
     public void credit(String AccountId, double amount, String description) throws BankAccountNotFoundException, BalanceNotSufficientException {
-        BankAccount bankAccount = getBankAccount(AccountId);
+        BankAccount bankAccount = bankAccountReposiroty.findById(AccountId)
+                .orElseThrow(() -> new BankAccountNotFoundException("Account Not Found"));
         AccountOperation accountOperation = new AccountOperation();
         accountOperation.setAmount(amount);
         accountOperation.setDateOperation(new Date());
@@ -136,8 +142,19 @@ public class BankAccountServiceImpl implements BankAccountService{
     }
 
     @Override
-    public List<BankAccount> listBankAccount() {
-        return bankAccountReposiroty.findAll();
+    public List<BankAccountDTO> listBankAccount() {
+        List<BankAccount> listBankAccount = bankAccountReposiroty.findAll();
+        List<BankAccountDTO> bankAccountDTOS = listBankAccount
+                .stream().map(bankAccount -> {
+            if(bankAccount instanceof SavingAccount){
+                SavingAccount savingAccount = (SavingAccount) bankAccount;
+                return mapper.fromSavingBankAccount(savingAccount);}
+            else{
+                CurrentAccount currentAccount = (CurrentAccount) bankAccount;
+                return mapper.fromCurrentBankAccount(currentAccount);
+            }
+        }).collect(Collectors.toList());
+        return bankAccountDTOS;
     }
 
      @Override
@@ -160,6 +177,16 @@ public class BankAccountServiceImpl implements BankAccountService{
 
     }
 
+    @Override
+    public List<AccountOperationDTO> getHistory(String accountID){
+        List<AccountOperation> accountOperations = accountOperationRepository.findByBankAccountId(accountID);
+        return accountOperations.stream().map(accountOperation -> mapper.fromAccountOperation(accountOperation)).collect(Collectors.toList());
+    }
 
+    @Override
+    public AccountHistoryDTO getAccountHistory(String id, int page, int size) {
+        return null;
+
+    }
 
 }
